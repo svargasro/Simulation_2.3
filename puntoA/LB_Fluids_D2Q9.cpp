@@ -3,12 +3,12 @@
 #include <cmath>
 using namespace std;
 
-const int Lx=256;
+const int Lx=512;
 const int Ly=64;
 
 const int Q=9;
 
-const double tau=0.55;
+const double tau=1.5;
 const double Utau=1.0/tau;
 const double UmUtau=1-Utau;
 
@@ -98,7 +98,7 @@ void LatticeBoltzmann::Collision(void){
     }  
 }
 void LatticeBoltzmann::ImposeFields(double Ufan){
-  int i,ix,iy,n0; double rho0; int ixc=Lx/8, iyc=Ly/2, R=Ly/5; double R2=R*R;
+  int i,ix,iy,n0; double rho0; int ixc=128, iyc=32, R=8; double R2=R*R;
   //go through all cells, looking if they are fan or obstacle
   for(ix=0;ix<Lx;ix++) //for each cell
     for(iy=0;iy<Ly;iy++){
