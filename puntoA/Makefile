@@ -1,4 +1,4 @@
-all: plot.pdf
+all: plotA.pdf
 
 %.x: %.o
 	g++ $^ -o $@
@@ -6,8 +6,8 @@ all: plot.pdf
 wind.dat: puntoA.x
 	./puntoA.x
 
-plot.pdf: wind.dat plot.gp
-	gnuplot plot.gp
-	open plot.png
+plotA.pdf: wind.dat plot.py
+	python3 plot.py
+
 clean:
 	rm -f *.o *.x *.dat
