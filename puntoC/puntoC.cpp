@@ -251,11 +251,11 @@ return interpolatedSigma;
 vector<double> LatticeBoltzmann::dF(double x,double y, double dx, double dy,double rho0, double eta, double dt){
 
 
-vector<double> fuerza = {sigmaInterpolated[0]*dx+sigmaInterpolated[1]*dy,sigmaInterpolated[1]*dx+sigmaInterpolated[2]*dy};ed = interpolationSigma(x,y,rho0,eta,dt);
+vector<double> sigmaInterpolated = interpolationSigma(x,y,rho0,eta,dt);
 
-igmaInterpolated[2]*dyig
-maInterpolated_xx*dx + sigmaInterpolated_xy*dy,sigmaInterpolated_yx*dx + sigmaInterpolated_yy*dy }
-return fuerza
+vector<double> fuerza = {sigmaInterpolated[0]*dx+sigmaInterpolated[1]*dy,sigmaInterpolated[1]*dx+sigmaInterpolated[2]*dy};
+
+return fuerza; 
 
 /*
 dFi = sigma(ij) dAj
