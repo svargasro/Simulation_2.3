@@ -38,10 +38,10 @@ public:
   double sigmayy(double rho0, double eta, double dy_dy);
 
   //Función de interpolación bilineal
-  vector<double> interpolationSigma(double x, double y);
+  vector<double> interpolationSigma(double x, double y, double rho, double eta, double dt);
 
   //Función que calcula el diferencial de fuerza
-  vector<double> dF(double x, double y, double dx, double );
+  vector<double> dF(double x, double y, double dx, double dy, double rho0, double eta, double dt);
   
   void Start(double rho0,double Ux0,double Uy0);
   void Print(const char * NameFile,double Ufan);
@@ -246,12 +246,15 @@ double interpolatedSigmaYY = sigmayy_ix_iy*(1-u)*(1-v) + sigmayy_ixP1_iy*u*(1-v)
 vector <double> interpolatedSigma = {interpolatedSigmaXX, interpolatedSigmaXY, interpolatedSigmaYY};
 return interpolatedSigma;
 
- }
+ 
+}
 vector<double> LatticeBoltzmann::dF(double x,double y, double dx, double dy,double rho0, double eta, double dt){
 
-vector<double> sigmaInterpolated = interpolationSigma(x,y,rho0,eta,dt);
-vector<double> fuerza = {0,0};
-//vector<double> fuerza = {sigmaInterpolated_xx*dx + sigmaInterpolated_xy*dy,sigmaInterpolated_yx*dx + sigmaInterpolated_yy*dy }
+
+vector<double> fuerza = {sigmaInterpolated[0]*dx+sigmaInterpolated[1]*dy,sigmaInterpolated[1]*dx+sigmaInterpolated[2]*dy};ed = interpolationSigma(x,y,rho0,eta,dt);
+
+igmaInterpolated[2]*dyig
+maInterpolated_xx*dx + sigmaInterpolated_xy*dy,sigmaInterpolated_yx*dx + sigmaInterpolated_yy*dy }
 return fuerza
 
 /*
