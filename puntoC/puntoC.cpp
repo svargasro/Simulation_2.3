@@ -28,7 +28,7 @@ public:
   double Jy(int ix,int iy,bool UseNew);
   double feq(double rho0,double Ux0,double Uy0,int i);
   void Collision(void);
-  void ImposeFields(double Ufan);
+  void ImposeFields(double Ufan, int ixc, int iyc,int R);
   void Advection(void);
   vector<double> Derivatives(int ix, int iy, double dt); //Calcula dUx/dx, dUx/dy, dUy/dx, dUy/dy dada una celda. 
 
@@ -38,10 +38,11 @@ public:
   double sigmayy(double rho0, double eta, double dy_dy);
 
   //Función de interpolación bilineal
-  vector<double> interpolationSigma(double x, double y, double rho, double eta, double dt);
+  vector<double> interpolationSigma(double x, double y, double nu, double dt);
 
   //Función que calcula el diferencial de fuerza
-  vector<double> dF(double x, double y, double dx, double dy, double rho0, double eta, double dt);
+  vector<double> dF(double x, double y, double dx, double dy, double nu, double dt);
+
   
   void Start(double rho0,double Ux0,double Uy0);
   void Print(const char * NameFile,double Ufan);
@@ -111,8 +112,9 @@ void LatticeBoltzmann::Collision(void){
       }
     }  
 }
-void LatticeBoltzmann::ImposeFields(double Ufan){
-  int i,ix,iy,n0; double rho0; int ixc=128, iyc=32, R=8; double R2=R*R;
+
+void LatticeBoltzmann::ImposeFields(double Ufan, int ixc, int iyc,int R){
+  int i,ix,iy,n0; double rho0; double R2=R*R;
   //go through all cells, looking if they are fan or obstacle
   for(ix=0;ix<Lx;ix++) //for each cell
     for(iy=0;iy<Ly;iy++){
@@ -191,7 +193,7 @@ double LatticeBoltzmann::sigmayy(double rho0, double eta, double dy_dy){
   return syy;
 }
 
-vector<double> LatticeBoltzmann::interpolationSigma(double x, double y, double rho0, double eta, double dt){
+vector<double> LatticeBoltzmann::interpolationSigma(double x, double y, double nu, double dt){
 /*
 M*ancho = x + 0  ;   x: punto cualquiera que mido en el plano 
 M = x/ancho
@@ -211,36 +213,45 @@ double u = x - ix;
 double v = y - iy;
 
 //Cálculo para celda (ix,iy)
+double rho_ix_iy = rho(ix,iy,false);
+double eta_ix_iy = nu*rho_ix_iy;
 
 vector<double> derivatesIxIy = Derivatives(ix, iy, dt); //{dx_dx, dx_dy, dy_dx, dy_dy}
-double sigmaxx_ix_iy = sigmaxx(rho0, eta, derivatesIxIy[0]);
-double sigmaxy_ix_iy = sigmaxy(rho0, eta, derivatesIxIy[1],derivatesIxIy[2]);
-double sigmayy_ix_iy = sigmayy(rho0, eta, derivatesIxIy[3]);
+double sigmaxx_ix_iy = sigmaxx(rho_ix_iy, eta_ix_iy, derivatesIxIy[0]);
+double sigmaxy_ix_iy = sigmaxy(rho_ix_iy, eta_ix_iy, derivatesIxIy[1],derivatesIxIy[2]);
+double sigmayy_ix_iy = sigmayy(rho_ix_iy, eta_ix_iy, derivatesIxIy[3]);
 
 //Cálculo para (ix+1,iy)
+double rho_ixP1_iy = rho(ix+1,iy,false);
+double eta_ixP1_iy = nu*rho_ixP1_iy;
 
 vector<double> derivatesIxP1Iy = Derivatives(ix+1, iy, dt); //{dx_dx, dx_dy, dy_dx, dy_dy}
-double sigmaxx_ixP1_iy = sigmaxx(rho0, eta, derivatesIxP1Iy[0]);
-double sigmaxy_ixP1_iy = sigmaxy(rho0, eta, derivatesIxP1Iy[1],derivatesIxP1Iy[2]);
-double sigmayy_ixP1_iy = sigmayy(rho0, eta, derivatesIxP1Iy[3]);
+double sigmaxx_ixP1_iy = sigmaxx(rho_ixP1_iy, eta_ixP1_iy, derivatesIxP1Iy[0]);
+double sigmaxy_ixP1_iy = sigmaxy(rho_ixP1_iy, eta_ixP1_iy, derivatesIxP1Iy[1],derivatesIxP1Iy[2]);
+double sigmayy_ixP1_iy = sigmayy(rho_ixP1_iy, eta_ixP1_iy, derivatesIxP1Iy[3]);
 
 //Cálculo para (ix,iy+1) [Problema si iy es el límite.]
+double rho_ix_iyP1 = rho(ix,iy+1,false);
+double eta_ix_iyP1 = nu*rho_ix_iyP1;
 
 vector<double> derivatesIxIyP1 = Derivatives(ix, iy+1, dt); //{dx_dx, dx_dy, dy_dx, dy_dy}
-double sigmaxx_ix_iyP1 = sigmaxx(rho0, eta, derivatesIxIyP1[0]);
-double sigmaxy_ix_iyP1 = sigmaxy(rho0, eta, derivatesIxIyP1[1],derivatesIxIyP1[2]);
-double sigmayy_ix_iyP1 = sigmayy(rho0, eta, derivatesIxIyP1[3]);
+double sigmaxx_ix_iyP1 = sigmaxx(rho_ix_iyP1, eta_ix_iyP1, derivatesIxIyP1[0]);
+double sigmaxy_ix_iyP1 = sigmaxy(rho_ix_iyP1, eta_ix_iyP1, derivatesIxIyP1[1],derivatesIxIyP1[2]);
+double sigmayy_ix_iyP1 = sigmayy(rho_ix_iyP1, eta_ix_iyP1, derivatesIxIyP1[3]);
 
 
 //Cálculo para (ix+1,iy+1) [Problema si iy es el límite.]
+double rho_ixP1_iyP1 = rho(ix+1,iy+1,false);
+double eta_ixP1_iyP1 = nu*rho_ixP1_iyP1;
+
 vector<double> derivatesIxP1IyP1 = Derivatives(ix+1, iy+1, dt); //{dx_dx, dx_dy, dy_dx, dy_dy}
-double sigmaxx_ixP1_iyP1 = sigmaxx(rho0, eta, derivatesIxP1IyP1[0]);
-double sigmaxy_ixP1_iyP1 = sigmaxy(rho0, eta, derivatesIxP1IyP1[1],derivatesIxP1IyP1[2]);
-double sigmayy_ixP1_iyP1 = sigmayy(rho0, eta, derivatesIxP1IyP1[3]);
+double sigmaxx_ixP1_iyP1 = sigmaxx(rho_ixP1_iyP1, eta_ixP1_iyP1, derivatesIxP1IyP1[0]);
+double sigmaxy_ixP1_iyP1 = sigmaxy(rho_ixP1_iyP1, eta_ixP1_iyP1, derivatesIxP1IyP1[1],derivatesIxP1IyP1[2]);
+double sigmayy_ixP1_iyP1 = sigmayy(rho_ixP1_iyP1, eta_ixP1_iyP1, derivatesIxP1IyP1[3]);
 
 
 double interpolatedSigmaXX = sigmaxx_ix_iy*(1-u)*(1-v) + sigmaxx_ixP1_iy*u*(1-v) + sigmaxx_ix_iyP1*(1-u)*v + sigmaxx_ixP1_iyP1*u*v;
-double interpolatedSigmaXY = sigmaxx_ix_iy*(1-u)*(1-v) + sigmaxy_ixP1_iy*u*(1-v) + sigmaxy_ix_iyP1*(1-u)*v + sigmaxy_ixP1_iyP1*u*v;
+double interpolatedSigmaXY = sigmaxy_ix_iy*(1-u)*(1-v) + sigmaxy_ixP1_iy*u*(1-v) + sigmaxy_ix_iyP1*(1-u)*v + sigmaxy_ixP1_iyP1*u*v;
 double interpolatedSigmaYY = sigmayy_ix_iy*(1-u)*(1-v) + sigmayy_ixP1_iy*u*(1-v) + sigmayy_ix_iyP1*(1-u)*v + sigmayy_ixP1_iyP1*u*v;
 
 vector <double> interpolatedSigma = {interpolatedSigmaXX, interpolatedSigmaXY, interpolatedSigmaYY};
@@ -248,10 +259,10 @@ return interpolatedSigma;
 
  
 }
-vector<double> LatticeBoltzmann::dF(double x,double y, double dx, double dy,double rho0, double eta, double dt){
+vector<double> LatticeBoltzmann::dF(double x,double y, double dx, double dy, double nu, double dt){
 
 
-vector<double> sigmaInterpolated = interpolationSigma(x,y,rho0,eta,dt);
+vector<double> sigmaInterpolated = interpolationSigma(x,y,nu,dt);
 
 vector<double> fuerza = {sigmaInterpolated[0]*dx+sigmaInterpolated[1]*dy,sigmaInterpolated[1]*dx+sigmaInterpolated[2]*dy};
 
@@ -261,9 +272,13 @@ return fuerza;
 dFi = sigma(ij) dAj
 -dFx = sigma(xx)dAx + sigma(xy)dAy
 -dFy = sigma(yx)dAx + sigma(yy)dAy
+
+dA = (dx,dy)
 */
 
 }
+
+
 
 
 void LatticeBoltzmann::Print(const char * NameFile,double Ufan){
@@ -282,19 +297,19 @@ void LatticeBoltzmann::Print(const char * NameFile,double Ufan){
 
 int main(void){
   LatticeBoltzmann Air;
-  int t,tmax=10000;
+  int t,tmax=5000;
   double rho0=1.0,Ufan0=0.1;
   double dt = 0.1;
   double nu = dt*(1/3.0)*(tau- 1.0/2);
-  
+  int ixc=128, iyc=32, R=8;
 
   //Start
   Air.Start(rho0,Ufan0,0);
   //Run
   for(t=0;t<tmax;t++){
     Air.Collision();
-    Air.ImposeFields(Ufan0);
-    Air.Advection();    
+    Air.ImposeFields(Ufan0,ixc,iyc,R);
+    Air.Advection();
   }
   //Show
   Air.Print("wind.dat",Ufan0);
