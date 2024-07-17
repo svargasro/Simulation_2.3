@@ -28,7 +28,7 @@ public:
   double Jy(int ix,int iy,bool UseNew);
   double feq(double rho0,double Ux0,double Uy0,int i);
   void Collision(void);
-  void ImposeFields(double Ufan, int ixc, int iyc,int R)
+  void ImposeFields(double Ufan, int ixc, int iyc,int R);
   void Advection(void);
   vector<double> Derivatives(int ix, int iy, double dt); //Calcula dUx/dx, dUx/dy, dUy/dx, dUy/dy dada una celda. 
 
@@ -38,10 +38,11 @@ public:
   double sigmayy(double rho0, double eta, double dy_dy);
 
   //Función de interpolación bilineal
-  vector<double> interpolationSigma(double x, double y, double rho, double eta, double dt);
+  vector<double> interpolationSigma(double x, double y, double nu, double dt);
 
   //Función que calcula el diferencial de fuerza
-  vector<double> dF(double x, double y, double dx, double dy, double rho0, double eta, double dt);
+  vector<double> dF(double x, double y, double dx, double dy, double nu, double dt);
+  vector<double> FSobreCilindro(double nu, double dt, int N, int ixc, int iyc, int R);
   
   void Start(double rho0,double Ux0,double Uy0);
   void Print(const char * NameFile,double Ufan);
@@ -192,7 +193,7 @@ double LatticeBoltzmann::sigmayy(double rho0, double eta, double dy_dy){
   return syy;
 }
 
-vector<double> LatticeBoltzmann::interpolationSigma(double x, double y, double rho0, double eta, double dt){
+vector<double> LatticeBoltzmann::interpolationSigma(double x, double y, double nu, double dt){
 /*
 M*ancho = x + 0  ;   x: punto cualquiera que mido en el plano 
 M = x/ancho
@@ -212,32 +213,41 @@ double u = x - ix;
 double v = y - iy;
 
 //Cálculo para celda (ix,iy)
+double rho_ix_iy = rho(ix,iy,false);
+double eta_ix_iy = nu/rho_ix_iy;
 
 vector<double> derivatesIxIy = Derivatives(ix, iy, dt); //{dx_dx, dx_dy, dy_dx, dy_dy}
-double sigmaxx_ix_iy = sigmaxx(rho0, eta, derivatesIxIy[0]);
-double sigmaxy_ix_iy = sigmaxy(rho0, eta, derivatesIxIy[1],derivatesIxIy[2]);
-double sigmayy_ix_iy = sigmayy(rho0, eta, derivatesIxIy[3]);
+double sigmaxx_ix_iy = sigmaxx(rho_ix_iy, eta_ix_iy, derivatesIxIy[0]);
+double sigmaxy_ix_iy = sigmaxy(rho_ix_iy, eta_ix_iy, derivatesIxIy[1],derivatesIxIy[2]);
+double sigmayy_ix_iy = sigmayy(rho_ix_iy, eta_ix_iy, derivatesIxIy[3]);
 
 //Cálculo para (ix+1,iy)
+double rho_ixP1_iy = rho(ix+1,iy,false);
+double eta_ixP1_iy = nu/rho_ixP1_iy;
 
 vector<double> derivatesIxP1Iy = Derivatives(ix+1, iy, dt); //{dx_dx, dx_dy, dy_dx, dy_dy}
-double sigmaxx_ixP1_iy = sigmaxx(rho0, eta, derivatesIxP1Iy[0]);
-double sigmaxy_ixP1_iy = sigmaxy(rho0, eta, derivatesIxP1Iy[1],derivatesIxP1Iy[2]);
-double sigmayy_ixP1_iy = sigmayy(rho0, eta, derivatesIxP1Iy[3]);
+double sigmaxx_ixP1_iy = sigmaxx(rho_ixP1_iy, eta_ixP1_iy, derivatesIxP1Iy[0]);
+double sigmaxy_ixP1_iy = sigmaxy(rho_ixP1_iy, eta_ixP1_iy, derivatesIxP1Iy[1],derivatesIxP1Iy[2]);
+double sigmayy_ixP1_iy = sigmayy(rho_ixP1_iy, eta_ixP1_iy, derivatesIxP1Iy[3]);
 
 //Cálculo para (ix,iy+1) [Problema si iy es el límite.]
+double rho_ix_iyP1 = rho(ix,iy+1,false);
+double eta_ix_iyP1 = nu/rho_ix_iyP1;
 
 vector<double> derivatesIxIyP1 = Derivatives(ix, iy+1, dt); //{dx_dx, dx_dy, dy_dx, dy_dy}
-double sigmaxx_ix_iyP1 = sigmaxx(rho0, eta, derivatesIxIyP1[0]);
-double sigmaxy_ix_iyP1 = sigmaxy(rho0, eta, derivatesIxIyP1[1],derivatesIxIyP1[2]);
-double sigmayy_ix_iyP1 = sigmayy(rho0, eta, derivatesIxIyP1[3]);
+double sigmaxx_ix_iyP1 = sigmaxx(rho_ix_iyP1, eta_ix_iyP1, derivatesIxIyP1[0]);
+double sigmaxy_ix_iyP1 = sigmaxy(rho_ix_iyP1, eta_ix_iyP1, derivatesIxIyP1[1],derivatesIxIyP1[2]);
+double sigmayy_ix_iyP1 = sigmayy(rho_ix_iyP1, eta_ix_iyP1, derivatesIxIyP1[3]);
 
 
 //Cálculo para (ix+1,iy+1) [Problema si iy es el límite.]
+double rho_ixP1_iyP1 = rho(ix+1,iy+1,false);
+double eta_ixP1_iyP1 = nu/rho_ixP1_iyP1;
+
 vector<double> derivatesIxP1IyP1 = Derivatives(ix+1, iy+1, dt); //{dx_dx, dx_dy, dy_dx, dy_dy}
-double sigmaxx_ixP1_iyP1 = sigmaxx(rho0, eta, derivatesIxP1IyP1[0]);
-double sigmaxy_ixP1_iyP1 = sigmaxy(rho0, eta, derivatesIxP1IyP1[1],derivatesIxP1IyP1[2]);
-double sigmayy_ixP1_iyP1 = sigmayy(rho0, eta, derivatesIxP1IyP1[3]);
+double sigmaxx_ixP1_iyP1 = sigmaxx(rho_ixP1_iyP1, eta_ixP1_iyP1, derivatesIxP1IyP1[0]);
+double sigmaxy_ixP1_iyP1 = sigmaxy(rho_ixP1_iyP1, eta_ixP1_iyP1, derivatesIxP1IyP1[1],derivatesIxP1IyP1[2]);
+double sigmayy_ixP1_iyP1 = sigmayy(rho_ixP1_iyP1, eta_ixP1_iyP1, derivatesIxP1IyP1[3]);
 
 
 double interpolatedSigmaXX = sigmaxx_ix_iy*(1-u)*(1-v) + sigmaxx_ixP1_iy*u*(1-v) + sigmaxx_ix_iyP1*(1-u)*v + sigmaxx_ixP1_iyP1*u*v;
@@ -249,10 +259,10 @@ return interpolatedSigma;
 
  
 }
-vector<double> LatticeBoltzmann::dF(double x,double y, double dx, double dy,double rho0, double eta, double dt){
+vector<double> LatticeBoltzmann::dF(double x,double y, double dx, double dy, double nu, double dt){
 
 
-vector<double> sigmaInterpolated = interpolationSigma(x,y,rho0,eta,dt);
+vector<double> sigmaInterpolated = interpolationSigma(x,y,nu,dt);
 
 vector<double> fuerza = {sigmaInterpolated[0]*dx+sigmaInterpolated[1]*dy,sigmaInterpolated[1]*dx+sigmaInterpolated[2]*dy};
 
@@ -268,7 +278,7 @@ dA = (dx,dy)
 
 }
 
-vector<double> LatticeBoltzmann::FSobreCilindro(double x,double y, double dx, double dy,double rho0, double eta, double dt, int N, int ixc, int ixy, int R){
+vector<double> LatticeBoltzmann::FSobreCilindro(double nu, double dt, int N, int ixc, int iyc, int R){
 
 /*
  - Recibe el número N de elementos en los que se divide la circunferencia.
@@ -279,20 +289,25 @@ vector<double> LatticeBoltzmann::FSobreCilindro(double x,double y, double dx, do
  - dA = (dx, dy) -> dx = R*thetaPaso*cos(theta) , dy = R*thetaPaso*sin(theta)
 */
 
-
   double thetaPaso = (2.0/N)*M_PI;
   double thetaInicial = thetaPaso/2.0;
-
+  double theta;
   clog<<"theta: "<<thetaInicial<<endl;
 
-  
+  double fTotalX = 0;
+  double fTotalY = 0;
   for (int m=0;m<N; m++) {
+    double theta = thetaInicial+m*thetaPaso;
+    double x = ixc + R*cos(theta);
+    double y = iyc + R*sin(theta);
+    double dx = R*thetaPaso*cos(theta);
+    double dy = R*thetaPaso*sin(theta);
 
-
+    vector<double> fIteracion = dF(x,y,dx,dy,nu,dt);
+    fTotalX += fIteracion[0];
+    fTotalY += fIteracion[1];
   }
-
-
-  Vector<double> fuerzaSobreCilindro = {0,0}
+  vector<double> fuerzaSobreCilindro = {fTotalX,fTotalY};
   return fuerzaSobreCilindro;
 }
 
@@ -319,6 +334,8 @@ int main(void){
   double dt = 0.1;
   double nu = dt*(1/3.0)*(tau- 1.0/2);
   int ixc=128, iyc=32, R=8;
+  int N = 24;
+  vector<double> fCilindro = {0,0};
 
   //Start
   Air.Start(rho0,Ufan0,0);
@@ -327,6 +344,8 @@ int main(void){
     Air.Collision();
     Air.ImposeFields(Ufan0,ixc,iyc,R);
     Air.Advection();
+    fCilindro = Air.FSobreCilindro(nu, dt, N, ixc,iyc, R);
+    cout<<t<<" Fuerza en x:"<<fCilindro[0]<<"Fuerza en y:"<<fCilindro[1]<<endl;
   }
   //Show
   Air.Print("wind.dat",Ufan0);
