@@ -214,7 +214,7 @@ double v = y - iy;
 
 //Cálculo para celda (ix,iy)
 double rho_ix_iy = rho(ix,iy,false);
-double eta_ix_iy = nu/rho_ix_iy;
+double eta_ix_iy = nu*rho_ix_iy;
 
 vector<double> derivatesIxIy = Derivatives(ix, iy, dt); //{dx_dx, dx_dy, dy_dx, dy_dy}
 double sigmaxx_ix_iy = sigmaxx(rho_ix_iy, eta_ix_iy, derivatesIxIy[0]);
@@ -223,7 +223,7 @@ double sigmayy_ix_iy = sigmayy(rho_ix_iy, eta_ix_iy, derivatesIxIy[3]);
 
 //Cálculo para (ix+1,iy)
 double rho_ixP1_iy = rho(ix+1,iy,false);
-double eta_ixP1_iy = nu/rho_ixP1_iy;
+double eta_ixP1_iy = nu*rho_ixP1_iy;
 
 vector<double> derivatesIxP1Iy = Derivatives(ix+1, iy, dt); //{dx_dx, dx_dy, dy_dx, dy_dy}
 double sigmaxx_ixP1_iy = sigmaxx(rho_ixP1_iy, eta_ixP1_iy, derivatesIxP1Iy[0]);
@@ -232,7 +232,7 @@ double sigmayy_ixP1_iy = sigmayy(rho_ixP1_iy, eta_ixP1_iy, derivatesIxP1Iy[3]);
 
 //Cálculo para (ix,iy+1) [Problema si iy es el límite.]
 double rho_ix_iyP1 = rho(ix,iy+1,false);
-double eta_ix_iyP1 = nu/rho_ix_iyP1;
+double eta_ix_iyP1 = nu*rho_ix_iyP1;
 
 vector<double> derivatesIxIyP1 = Derivatives(ix, iy+1, dt); //{dx_dx, dx_dy, dy_dx, dy_dy}
 double sigmaxx_ix_iyP1 = sigmaxx(rho_ix_iyP1, eta_ix_iyP1, derivatesIxIyP1[0]);
@@ -242,7 +242,7 @@ double sigmayy_ix_iyP1 = sigmayy(rho_ix_iyP1, eta_ix_iyP1, derivatesIxIyP1[3]);
 
 //Cálculo para (ix+1,iy+1) [Problema si iy es el límite.]
 double rho_ixP1_iyP1 = rho(ix+1,iy+1,false);
-double eta_ixP1_iyP1 = nu/rho_ixP1_iyP1;
+double eta_ixP1_iyP1 = nu*rho_ixP1_iyP1;
 
 vector<double> derivatesIxP1IyP1 = Derivatives(ix+1, iy+1, dt); //{dx_dx, dx_dy, dy_dx, dy_dy}
 double sigmaxx_ixP1_iyP1 = sigmaxx(rho_ixP1_iyP1, eta_ixP1_iyP1, derivatesIxP1IyP1[0]);
@@ -292,7 +292,7 @@ vector<double> LatticeBoltzmann::FSobreCilindro(double nu, double dt, int N, int
   double thetaPaso = (2.0/N)*M_PI;
   double thetaInicial = thetaPaso/2.0;
   double theta;
-  clog<<"theta: "<<thetaInicial<<endl;
+  
 
   double fTotalX = 0;
   double fTotalY = 0;
@@ -329,7 +329,7 @@ void LatticeBoltzmann::Print(const char * NameFile,double Ufan){
 
 int main(void){
   LatticeBoltzmann Air;
-  int t,tmax=10000;
+  int t,tmax=5000;
   double rho0=1.0,Ufan0=0.1;
   double dt = 0.1;
   double nu = dt*(1/3.0)*(tau- 1.0/2);
@@ -345,7 +345,8 @@ int main(void){
     Air.ImposeFields(Ufan0,ixc,iyc,R);
     Air.Advection();
     fCilindro = Air.FSobreCilindro(nu, dt, N, ixc,iyc, R);
-    cout<<t<<" Fuerza en x:"<<fCilindro[0]<<"Fuerza en y:"<<fCilindro[1]<<endl;
+    //cout<<t<<" Fuerza en x:"<<fCilindro[0]<<" Fuerza en y:"<<fCilindro[1]<<endl;
+    /// U_ventilador*R/nu 
   }
   //Show
   Air.Print("wind.dat",Ufan0);
