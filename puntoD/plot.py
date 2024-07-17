@@ -1,6 +1,14 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import os
+from scipy.optimize import curve_fit
+from scipy.stats import pearsonr
+
+
+
+
+def lineal_model(x, a, b):
+    return a*x + b
 
 # Ruta del directorio que quieres verificar
 directorio = './output/'
@@ -9,49 +17,63 @@ archivos = os.listdir(directorio)
 # Contar la cantidad de archivos
 cantidadArchivos = len(archivos)
 
-print(archivos)
-# time = np.zeros(cantidadArchivos)
-# timeDesv = np.zeros(cantidadArchivos)
-# size = np.zeros(cantidadArchivos)
+#print(archivos)
+
+Re = np.zeros(cantidadArchivos)
+
+cA = np.zeros(cantidadArchivos)
 
 
-# for i, archivo in enumerate(archivos):
+for i, archivo in enumerate(archivos):
 
-#     timeArray, sizeArray = np.genfromtxt(f'./output/{archivo}',delimiter=' ', usecols=(0,1),unpack=True)
+    ReArray, cAArray = np.genfromtxt(f'./output/{archivo}',delimiter=' ', usecols=(0,1),unpack=True)
 
-#     meanTime = np.mean(timeArray)
-
-#     time[i] = meanTime
-
-#     size[i] = sizeArray[0]
+    Re[i] = ReArray[0]
+    cA[i] = np.mean(cAArray[100:]) #Se toma desde el dato 100 porque es el dato aproximado en el que se estabiliza.
 
 
+plt.style.use('https://github.com/dhaitz/matplotlib-stylesheets/raw/master/pitayasmoothie-light.mplstyle')
 
-# #Se normaliza el promedio y desviación estándar dividiendo por el tiempo y desviación estándar que tomó para el índice 0.
-# time = time/time[0]
-# timeDesv  = np.std(timeArray)
+fig, axes = plt.subplots(2, 1, figsize=(7, 6))
+
+# print(Re)
+# print(cA)
+
+ReSinLog = Re
+cASinLog = cA
+
+Re = np.log(Re)
+cA = np.log(cA)
+
+#Ajuste lineal:
+parameters, covarian_matrix = curve_fit(lineal_model, Re, cA)
+a, b = parameters
+
+cA_Adjusted = lineal_model(Re, a, b)
+
+r2, _ = pearsonr(cA, cA_Adjusted)
 
 
-# errorbar= 3.0*timeDesv
+#Gráficos.
+#
+axes[0].plot(Re, cA,"bo", label="Log(cA) vs. Log(Re)")
+axes[0].plot(Re, cA_Adjusted, label=r"Ajuste lineal ax + b. $R^2=${}, $a={}$ , $b={}$".format(round(r2,2),round(a,2),round(b,2)))
+#Se ajustan demás detalles del gráfico.
+axes[0].set_xlabel('Log(Re)', fontsize=12)
+axes[0].set_ylabel('Log(cA)',fontsize=12)
+axes[0].legend()
+axes[0].grid(True, linestyle='--')
+axes[0].set_title("Gráfico loglog Coeficiente de arrastre vs. Número de Reynolds", fontsize=14)
 
-# plt.style.use('https://github.com/dhaitz/matplotlib-stylesheets/raw/master/pitayasmoothie-light.mplstyle')
+axes[1].plot(ReSinLog, cASinLog,"bo", label="cA vs. Re")
+#Se ajustan demás detalles del gráfico.
+axes[1].set_xlabel('Re', fontsize=12)
+axes[1].set_ylabel('cA',fontsize=12)
+axes[1].legend()
+axes[1].grid(True, linestyle='--')
+axes[1].set_title("Coeficiente de arrastre vs. Número de Reynolds", fontsize=14)
 
-# fig, axes = plt.subplots(1, 1, figsize=(7, 6))
 
-
-# #Se grafica el tiempo de ejecución normalizado vs. tamaño de la matriz.
-# axes.errorbar(size, time, yerr= errorbar, fmt='bo', ecolor='black', markersize=4, label="Puntos con barras de error.")
-
-# #Se ajustan demás detalles del gráfico.
-# axes.set_xlabel('Número de incógnitas en el sistema de ecuaciones.', fontsize=12)
-# axes.set_ylabel(r'Tiempo de ejecución normalizado [ ]',fontsize=12)
-# axes.legend(loc='upper left')
-# axes.grid(True, linestyle='--')
-# axes.set_title("Tiempo de ejecución normalizado vs. Número de incógnitas.\n 10 iteraciones", fontsize=14)
-
-# axes.ticklabel_format(style='sci', axis='x', scilimits=(0,0))
-
-# plt.tight_layout()
-
-# plt.savefig(f'EscalamientoFuerte10Iter.png')
-# #plt.show()
+plt.tight_layout()
+plt.savefig(f'cAvsRe.png')
+#plt.show()

@@ -293,13 +293,17 @@ vector<double> LatticeBoltzmann::FSobreCilindro(double nu, double dt, int N, int
  - dA = (dx, dy) -> dx = R*thetaPaso*cos(theta) , dy = R*thetaPaso*sin(theta)
 */
 
+  //Se hace uso de coordenadas polares donde se divide la circunferencia en N arcos.
+  //ThetaInicial hace referencia al primer ángulo al que corresponde el centro del arco. Luego se recorren los demás centros en pasos de thetaPaso.
   double thetaPaso = (2.0/N)*M_PI;
   double thetaInicial = thetaPaso/2.0;
   double theta;
   
-
+  //Guardan la fuerza total.
   double fTotalX = 0;
   double fTotalY = 0;
+
+  //Se recorre cada arco de la circunferencia.
   for (int m=0;m<N; m++) {
     theta = thetaInicial+m*thetaPaso;
     double x = ixc + R*cos(theta);
@@ -307,7 +311,7 @@ vector<double> LatticeBoltzmann::FSobreCilindro(double nu, double dt, int N, int
     double dx = R*thetaPaso*cos(theta);
     double dy = R*thetaPaso*sin(theta);
 
-    vector<double> fIteracion = dF(x,y,dx,dy,nu,dt);
+    vector<double> fIteracion = dF(x,y,dx,dy,nu,dt); //Se calcula el dF debido al arco de circunferencia de la iteración.
     fTotalX += fIteracion[0];
     fTotalY += fIteracion[1];
   }
@@ -344,7 +348,7 @@ int main(int argc, char *argv[]) {
   LatticeBoltzmann Air;
   int t,tmax=500;
   double rho0=1.0;
-  double Ufan0 = std::stod(argv[1]);
+  double Ufan0 = std::stod(argv[1]); //Se recibe Ufan como argumento por consola para facilitar su estudio paralelizado.
   double dt = 0.1;
   double nu = dt*(1/3.0)*(tau- 1.0/2);
   int ixc=128, iyc=32, R=8;
@@ -358,8 +362,10 @@ int main(int argc, char *argv[]) {
 
 
 
-  double roundedRe = std::ceil(Re * 100.0) / 100.0;
+  //////////////////////////////////////////////////////////////////////
+  //Código para adecuar el nombre de los archivos de acuerdo al número de Reynolds.
 
+  double roundedRe = std::ceil(Re * 100.0) / 100.0;
   // Redondear el valor a 2 cifras decimales
   std::ostringstream oss;
   oss << std::fixed << setprecision(2) << roundedRe;
@@ -372,7 +378,7 @@ int main(int argc, char *argv[]) {
       ch = '_';
     }
   }
-
+  //////////////////////////////////////////////////////////////////////
 
   string filename = "./output/"+ roundedReStr + ".txt";
   ofstream fout;
@@ -385,22 +391,14 @@ int main(int argc, char *argv[]) {
     Air.Collision();
     Air.ImposeFields(Ufan0,ixc,iyc,R);
     Air.Advection();
-    fCilindro = Air.FSobreCilindro(nu, dt, N, ixc,iyc, R);
+    fCilindro = Air.FSobreCilindro(nu, dt, N, ixc,iyc, R); //Se calcula la fuerza total sobre el cilindro.
     Fx = fCilindro[0];
     Fy = fCilindro[1];
-    cA = Fx/(rho0*R*Ufan0*Ufan0);
+    cA = Fx/(rho0*R*Ufan0*Ufan0); //Se calcula cA.
     fout<<Re<<" "<<cA<<endl;
 
-
-
-    /*
-      - recibo fCilindro: Fx= fCilindro[0], Fy = fCilindro[1]
-      - cA = Fx/(rho*R*U*U) [Necesito rho, R, Ufan]
-      - Re=Ufan*R/nu [nu]
-      - fout<<Re<<" "<<cA; (Mando Ufan como entrada por consola.)
-    */
-
-//   cout<<t<<" Fuerza en x:"<<fCilindro[0]<<" Fuerza en y:"<<fCilindro[1]<<endl;
+    // cout<<t<<" "<<cA<<endl;
+    //   cout<<t<<" Fuerza en x:"<<fCilindro[0]<<" Fuerza en y:"<<fCilindro[1]<<endl;
   }
 
   fout.close();
