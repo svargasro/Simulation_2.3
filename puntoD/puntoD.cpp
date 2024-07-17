@@ -2,6 +2,10 @@
 #include <fstream>
 #include <cmath>
 #include <vector>
+#include <string>
+#include <sstream>
+#include <iomanip>
+
 using namespace std;
 
 const int Lx=512;
@@ -297,7 +301,7 @@ vector<double> LatticeBoltzmann::FSobreCilindro(double nu, double dt, int N, int
   double fTotalX = 0;
   double fTotalY = 0;
   for (int m=0;m<N; m++) {
-    double theta = thetaInicial+m*thetaPaso;
+    theta = thetaInicial+m*thetaPaso;
     double x = ixc + R*cos(theta);
     double y = iyc + R*sin(theta);
     double dx = R*thetaPaso*cos(theta);
@@ -310,6 +314,7 @@ vector<double> LatticeBoltzmann::FSobreCilindro(double nu, double dt, int N, int
   vector<double> fuerzaSobreCilindro = {fTotalX,fTotalY};
   return fuerzaSobreCilindro;
 }
+
 
 
 
@@ -327,15 +332,51 @@ void LatticeBoltzmann::Print(const char * NameFile,double Ufan){
 
 //--------------- Global Functions ------------
 
-int main(void){
+
+
+
+int main(int argc, char *argv[]) {
+
+
+
+
+
   LatticeBoltzmann Air;
-  int t,tmax=5000;
-  double rho0=1.0,Ufan0=0.1;
+  int t,tmax=500;
+  double rho0=1.0;
+  double Ufan0 = std::stod(argv[1]);
   double dt = 0.1;
   double nu = dt*(1/3.0)*(tau- 1.0/2);
   int ixc=128, iyc=32, R=8;
   int N = 24;
   vector<double> fCilindro = {0,0};
+
+  double Fx;
+  double Fy;
+  double cA;
+  double Re = Ufan0*R/nu;
+
+
+
+  double roundedRe = std::ceil(Re * 100.0) / 100.0;
+
+  // Redondear el valor a 2 cifras decimales
+  std::ostringstream oss;
+  oss << std::fixed << setprecision(2) << roundedRe;
+
+  std::string roundedReStr = oss.str();
+
+  // Reemplazar el punto decimal con un guion bajo
+  for (char &ch : roundedReStr) {
+    if (ch == '.') {
+      ch = '_';
+    }
+  }
+
+
+  string filename = "./output/"+ roundedReStr + ".txt";
+  ofstream fout;
+  fout.open(filename);
 
   //Start
   Air.Start(rho0,Ufan0,0);
@@ -345,11 +386,26 @@ int main(void){
     Air.ImposeFields(Ufan0,ixc,iyc,R);
     Air.Advection();
     fCilindro = Air.FSobreCilindro(nu, dt, N, ixc,iyc, R);
-    //cout<<t<<" Fuerza en x:"<<fCilindro[0]<<" Fuerza en y:"<<fCilindro[1]<<endl;
-    /// U_ventilador*R/nu 
+    Fx = fCilindro[0];
+    Fy = fCilindro[1];
+    cA = Fx/(rho0*R*Ufan0*Ufan0);
+    fout<<Re<<" "<<cA<<endl;
+
+
+
+    /*
+      - recibo fCilindro: Fx= fCilindro[0], Fy = fCilindro[1]
+      - cA = Fx/(rho*R*U*U) [Necesito rho, R, Ufan]
+      - Re=Ufan*R/nu [nu]
+      - fout<<Re<<" "<<cA; (Mando Ufan como entrada por consola.)
+    */
+
+//   cout<<t<<" Fuerza en x:"<<fCilindro[0]<<" Fuerza en y:"<<fCilindro[1]<<endl;
   }
+
+  fout.close();
   //Show
-  Air.Print("wind.dat",Ufan0);
+  //Air.Print("wind.dat",Ufan0);
  
   return 0;
 }  
