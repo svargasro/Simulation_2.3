@@ -15,30 +15,30 @@ const double UmUtau=1-Utau;
 
 //--------------------- class LatticeBoltzmann ------------
 class LatticeBoltzmann{
-private:
-  double w[Q];      //Weights 
-  int Vx[Q],Vy[Q];  //Velocity vectors
-  double *f, *fnew; //Distribution Functions
-public:
-  LatticeBoltzmann(void);
-  ~LatticeBoltzmann(void);
-  int n(int ix,int iy,int i){return (ix*Ly+iy)*Q+i;};
-  double rho(int ix,int iy,bool UseNew);
-  double Jx(int ix,int iy,bool UseNew);
-  double Jy(int ix,int iy,bool UseNew);
-  double feq(double rho0,double Ux0,double Uy0,int i);
-  void Collision(void);
-  void ImposeFields(double Ufan);
-  void Advection(void);
-  vector<double> Derivatives(int ix, int iy, double dt); //Calcula dUx/dx, dUx/dy, dUy/dx, dUy/dy dada una celda. 
+  private:
+    double w[Q];      //Weights
+    int Vx[Q],Vy[Q];  //Velocity vectors
+    double *f, *fnew; //Distribution Functions
+  public:
+    LatticeBoltzmann(void);
+    ~LatticeBoltzmann(void);
+    int n(int ix,int iy,int i){return (ix*Ly+iy)*Q+i;};
+    double rho(int ix,int iy,bool UseNew);
+    double Jx(int ix,int iy,bool UseNew);
+    double Jy(int ix,int iy,bool UseNew);
+    double feq(double rho0,double Ux0,double Uy0,int i);
+    void Collision(void);
+    void ImposeFields(double Ufan);
+    void Advection(void);
+    vector<double> Derivatives(int ix, int iy, double dt); //Calcula dUx/dx, dUx/dy, dUy/dx, dUy/dy dada una celda.
 
-  //Ya con el valor de las derivadas, se calculan las componentes del tensor de esfuerzos.
-  double sigmaxx(double rho0, double eta, double dx_dx); 
-  double sigmaxy(double rho0, double eta, double dx_dy, double dy_dx);
-  double sigmayy(double rho0, double eta, double dy_dy);
+    //Ya con el valor de las derivadas, se calculan las componentes del tensor de esfuerzos.
+    double sigmaxx(double rho0, double eta, double dx_dx);
+    double sigmaxy(double rho0, double eta, double dx_dy, double dy_dx);
+    double sigmayy(double rho0, double eta, double dy_dy);
   
-  void Start(double rho0,double Ux0,double Uy0);
-  void Print(const char * NameFile,double Ufan);
+    void Start(double rho0,double Ux0,double Uy0);
+    void Print(const char * NameFile,double Ufan);
 };  
 LatticeBoltzmann::LatticeBoltzmann(void){
   //Set the weights
@@ -47,14 +47,14 @@ LatticeBoltzmann::LatticeBoltzmann(void){
   Vx[0]=0;  Vx[1]=1;  Vx[2]=0;  Vx[3]=-1; Vx[4]=0;
   Vy[0]=0;  Vy[1]=0;  Vy[2]=1;  Vy[3]=0;  Vy[4]=-1;
 
-              Vx[5]=1;  Vx[6]=-1; Vx[7]=-1; Vx[8]=1;
-              Vy[5]=1;  Vy[6]=1;  Vy[7]=-1; Vy[8]=-1;
+  Vx[5]=1;  Vx[6]=-1; Vx[7]=-1; Vx[8]=1;
+  Vy[5]=1;  Vy[6]=1;  Vy[7]=-1; Vy[8]=-1;
   //Create the dynamic arrays
   int ArraySize=Lx*Ly*Q;
   f=new double [ArraySize];  fnew=new double [ArraySize];
 }
 LatticeBoltzmann::~LatticeBoltzmann(void){
-    delete[] f;  delete[] fnew;
+  delete[] f;  delete[] fnew;
 }
 double LatticeBoltzmann::rho(int ix,int iy,bool UseNew){
   double sum; int i,n0;
@@ -89,8 +89,8 @@ void LatticeBoltzmann::Start(double rho0,double Ux0,double Uy0){
   for(ix=0;ix<Lx;ix++) //for each cell
     for(iy=0;iy<Ly;iy++)
       for(i=0;i<Q;i++){ //on each direction
-	n0=n(ix,iy,i);
-	f[n0]=feq(rho0,Ux0,Uy0,i);
+        n0=n(ix,iy,i);
+        f[n0]=feq(rho0,Ux0,Uy0,i);
       }
 }  
 void LatticeBoltzmann::Collision(void){
@@ -100,8 +100,8 @@ void LatticeBoltzmann::Collision(void){
       //compute the macroscopic fields on the cell
       rho0=rho(ix,iy,false); Ux0=Jx(ix,iy,false)/rho0; Uy0=Jy(ix,iy,false)/rho0;
       for(i=0;i<Q;i++){ //for each velocity vector
-	n0=n(ix,iy,i);
-	fnew[n0]=UmUtau*f[n0]+Utau*feq(rho0,Ux0,Uy0,i);
+        n0=n(ix,iy,i);
+        fnew[n0]=UmUtau*f[n0]+Utau*feq(rho0,Ux0,Uy0,i);
       }
     }  
 }
@@ -113,10 +113,10 @@ void LatticeBoltzmann::ImposeFields(double Ufan){
       rho0=rho(ix,iy,false);
       //fan
       if(ix==0)
-	for(i=0;i<Q;i++){n0=n(ix,iy,i); fnew[n0]=feq(rho0,Ufan,0,i);}
+        for(i=0;i<Q;i++){n0=n(ix,iy,i); fnew[n0]=feq(rho0,Ufan,0,i);}
       //obstacle
       else if((ix-ixc)*(ix-ixc)+(iy-iyc)*(iy-iyc)<=R2) 
-	for(i=0;i<Q;i++) {n0=n(ix,iy,i); fnew[n0]=feq(rho0,0,0,i);}
+        for(i=0;i<Q;i++) {n0=n(ix,iy,i); fnew[n0]=feq(rho0,0,0,i);}
       //An extra point at one side to break the isotropy
       // else if(ix==ixc && iy==iyc+R+1)
       //for(i=0;i<Q;i++){n0=n(ix,iy,i); fnew[n0]=feq(rho0,0,0,i);}	
@@ -127,41 +127,36 @@ void LatticeBoltzmann::Advection(void){
   for(ix=0;ix<Lx;ix++) //for each cell
     for(iy=0;iy<Ly;iy++)
       for(i=0;i<Q;i++){ //on each direction
-	ixnext=(ix+Vx[i]+Lx)%Lx; iynext=(iy+Vy[i]+Ly)%Ly;
-	n0=n(ix,iy,i); n0next=n(ixnext,iynext,i);
-	f[n0next]=fnew[n0]; //periodic boundaries
+        ixnext=(ix+Vx[i]+Lx)%Lx; iynext=(iy+Vy[i]+Ly)%Ly;
+        n0=n(ix,iy,i); n0next=n(ixnext,iynext,i);
+        f[n0next]=fnew[n0]; //periodic boundaries
       }
 }
 vector<double> LatticeBoltzmann::Derivatives(int ix, int iy,double dt){
-   int i,ixnext,iynext;
-   double rhoNext,UxNext,UyNext;
-   double sumxx=0, sumxy=0, sumyx=0, sumyy=0;
+  int i,ixnext,iynext;
+  double rhoNext,UxNext,UyNext;
+  double sumxx=0, sumxy=0, sumyx=0, sumyy=0;
 
   for(i=0;i<Q;i++){ //on each direction
-	ixnext=(ix+Vx[i]+Lx)%Lx; iynext=(iy+Vy[i]+Ly)%Ly;
+    ixnext=(ix+Vx[i]+Lx)%Lx; iynext=(iy+Vy[i]+Ly)%Ly;
 
-  //Calculo las velocidades macroscópicas para las celdas aledañas a la celda en la que estoy parada
+    //Calculo las velocidades macroscópicas para las celdas aledañas a la celda en la que estoy parada
+    rhoNext=rho(ixnext,iynext,false); UxNext=Jx(ixnext,iynext,false)/rhoNext; UyNext=Jy(ixnext,iynext,false)/rhoNext; //preguntarse si usar false o true: false si se usa luego de advección.
 
-	rhoNext=rho(ixnext,iynext,false); UxNext=Jx(ixnext,iynext,false)/rhoNext; UyNext=Jy(ixnext,iynext,false)/rhoNext; //preguntarse si usar false o true: false si se usa luego de advección.
-
-  //Posibles combinaciones de la sumatoria para calcular más adelante las derivadas (se muestra en el taller)
-
-	sumxx += w[i]*Vx[i]*UxNext;
-	sumxy += w[i]*Vy[i]*UxNext; 
-	sumyx += w[i]*Vx[i]*UyNext;
-	sumyy += w[i]*Vy[i]*UyNext;
-	
+    //Posibles combinaciones de la sumatoria para calcular más adelante las derivadas (se muestra en el taller)
+    sumxx += w[i]*Vx[i]*UxNext;
+    sumxy += w[i]*Vy[i]*UxNext;
+    sumyx += w[i]*Vx[i]*UyNext;
+    sumyy += w[i]*Vy[i]*UyNext;
   }
 
   //Ya las posibles derivadas calculadas
-
 	double dx_dx = (3.0/dt)*sumxx;
   double dx_dy = (3.0/dt)*sumxy; //dx_dy es distinto a dy_dx 
 	double dy_dx = (3.0/dt)*sumyx;
 	double dy_dy = (3.0/dt)*sumyy;
 
   //Vector que guarda las derivadas
-
   vector<double> derivs = {dx_dx, dx_dy, dy_dx, dy_dy};
   return derivs;
 }
