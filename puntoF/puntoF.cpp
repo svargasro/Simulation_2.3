@@ -359,7 +359,7 @@ int main(int argc, char *argv[]) {
   double cA;
   double Re = Ufan0*R/nu;
 
-
+  double Fm = -0.5*rho0*2*R*R*w*Ufan0;
 
   //////////////////////////////////////////////////////////////////////
   //Código para adecuar el nombre de los archivos de acuerdo al número de Reynolds.
@@ -396,9 +396,9 @@ int main(int argc, char *argv[]) {
     Fy = fCilindro[1];
     cA = Fx/(rho0*R*Ufan0*Ufan0); //Se calcula cA.
     //fout<<Re<<" "<<cA<<endl;
-
     // cout<<t<<" "<<cA<<endl;
-    cout<<fCilindro[1]<<endl;
+    cout<< w << " " <<fCilindro[1]<< " " << Fm <<endl;
+
   }
 
   //fout.close();
